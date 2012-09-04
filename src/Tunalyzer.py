@@ -24,9 +24,9 @@ import win32com.client
 import gtk
 #import gobject
 
-class MusicDict(dict):
+class MusicModel(dict):
     def __init__(self, *args, **kwargs):
-        super(MusicDict, self).__init__(*args, **kwargs)
+        super(MusicModel, self).__init__(*args, **kwargs)
 
     def add(self, playTime, playCount, keya, keyb=None):
         timeParts = playTime.split(":")
@@ -65,10 +65,10 @@ class iTunesApp:
         self.app = win32com.client.gencache.EnsureDispatch("iTunes.Application")
         self.mainLibrarySource = self.app.LibrarySource
 
-        self.artists = MusicDict()
-        self.years = MusicDict()
-        self.albums = MusicDict()
-        self.songs = MusicDict()
+        self.artists = MusicModel()
+        self.years = MusicModel()
+        self.albums = MusicModel()
+        self.songs = MusicModel()
 
     def getPlayLists(self):
         self.playLists = self.mainLibrarySource.Playlists
@@ -115,28 +115,28 @@ class iTunesApp:
         return a
 
 
-class Handler:
+class Handlers:
 
-    def __init__(self, data):
-        self.ui = data
+    def __init__(self, widget, itunes):
+        self.widget = widget
+        self.itunes = itunes
 
     def on_startbutton_clicked (self, *args):
-        if self.ui.comboboxplaylist.get_active():
-            self.ui.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_OFF)
-            self.ui.startbutton.set_relief(gtk.RELIEF_NONE)
-            text = self.ui.comboboxplaylist.get_active_text()
-            self.ui.statusbar.set_text('Status: Analyzing playlist \'' + text + '\'. This may take a few moments.')
-            self.ui.tunes.setPlaylist(text)
+        if self.widget.comboboxplaylist.get_active():
+            self.widget.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_OFF)
+            self.widget.startbutton.set_relief(gtk.RELIEF_NONE)
+            text = self.widget.comboboxplaylist.get_active_text()
+            self.widget.statusbar.set_text('Status: Analyzing playlist \'' + text + '\'. This may take a few moments.')
+            self.itunes.setPlaylist(text)
 
-            artists = self.ui.tunes.artists.liszterize()
+            artists = self.itunes.artists.liszterize()
             i = 1
             for artist in artists:
-                self.ui.artiststore.append(artist)
+                self.widget.artiststore.append(artist)
                 i = i + 1
 
-            self.ui.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
-            self.ui.startbutton.set_relief(gtk.RELIEF_NORMAL)
-
+            self.widget.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
+            self.widget.startbutton.set_relief(gtk.RELIEF_NORMAL)
 
     def main_quit (self, data=None):
         gtk.main_quit()
@@ -147,34 +147,29 @@ class Handler:
 def delete_event(self, widget, event, data=None):
     gtk.main_quit()
 
-class TunaWindow:
-
-    def __init__(self):
-
-        builder = gtk.Builder()
-        builder.add_from_file('tunalyzer.xml')
-
-        self.window = builder.get_object('tunawindow')
-
-        # stores
-        self.playliststore = builder.get_object('playliststore')
-        self.albumstore = builder.get_object('albumstore')
-        self.artiststore = builder.get_object('artiststore')
-        self.songstore = builder.get_object('songstore')
-        self.yearstore = builder.get_object('yearstore')
-
-        # widgets
-        self.comboboxplaylist = builder.get_object('comboboxplaylist')
-        self.treeViewSongs = builder.get_object('treeViewSongs')
-        self.treeViewAlbums = builder.get_object('treeViewAlbums')
-        self.treeViewArtists = builder.get_object('treeViewArtists')
-        self.treeViewYears = builder.get_object('treeViewYears')
-        self.statusbar = builder.get_object('statusbar')
-        self.startbutton = builder.get_object('startbutton')
-
-        # add render to columns
-
-        # [ view: (column_name, list_store_column) }
+class Widgets:
+    
+    def __init__(self, builder):
+        widgets = {'window',
+                   # widget widgets
+                   'comboboxplaylist',
+                   'treeViewSongs',
+                   'treeViewAlbums',
+                   'treeViewArtists',
+                   'treeViewYears',
+                   'statusbar',
+                   'startbutton',
+                   # data stores
+                   'playliststore',
+                   'albumstore',
+                   'songstore',
+                   'artiststore',
+                   'yearstore'}
+        
+        for w in widgets:
+            setattr (self, w, builder.get_object(w))
+        
+        # attach TreeViewColumns to ListStores        
         views = { self.treeViewArtists: (('Artist', 2), ('Plays', 1), ('Time', 0)),
                  self.treeViewAlbums: (('Album', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
                  self.treeViewSongs: (('Song', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
@@ -191,28 +186,31 @@ class TunaWindow:
                 viewcolumn.pack_start(renderer)
                 view.append_column(viewcolumn)
 
-        # signals
-        builder.connect_signals(Handler(self))
-
-        self.window.show()
-        self.tunes = iTunesApp()
-        self.populateDropDown()
-
-
-    def populateDropDown(self):
-        renderer = gtk.CellRendererText()
         self.comboboxplaylist.pack_start(renderer)
         self.comboboxplaylist.add_attribute(renderer, "text", 0)
         self.playliststore.append(["--- Select Playlist ---"])
 
-        pList = self.tunes.getPlayLists()
+class Tunalyzer:
+
+    def __init__(self):
+
+        builder = gtk.Builder()
+        builder.add_from_file('tunalyzer.xml')
+        self.w = Widgets(builder)
+        self.itunes = iTunesApp()
+        builder.connect_signals(Handlers(self.w, self.itunes))
+        self.populateDropDown() # TODO: this should be a handler / window create signal?
+        self.w.window.show()
+
+    def populateDropDown(self):
+        pList = self.itunes.getPlayLists()
         i = 1
         for p in pList:
-            self.playliststore.append([p])
+            self.w.playliststore.append([p])
             i = i + 1
-        self.comboboxplaylist.set_active(0)
+        self.w.comboboxplaylist.set_active(0)
 
 if __name__ == "__main__":
-    tuna = TunaWindow()
+    tuna = Tunalyzer()
     gtk.main()
 
