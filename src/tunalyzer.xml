@@ -16,11 +16,11 @@
   </object>
   <object class="GtkListStore" id="artiststore">
     <columns>
-      <!-- column-name Time -->
+      <!-- column-name Artist -->
       <column type="gchararray"/>
       <!-- column-name Plays -->
       <column type="gint"/>
-      <!-- column-name Artist -->
+      <!-- column-name Time -->
       <column type="gchararray"/>
     </columns>
   </object>
@@ -33,6 +33,8 @@
   <object class="GtkListStore" id="songstore">
     <columns>
       <!-- column-name Song -->
+      <column type="gchararray"/>
+      <!-- column-name Artist -->
       <column type="gchararray"/>
       <!-- column-name Plays -->
       <column type="gint"/>

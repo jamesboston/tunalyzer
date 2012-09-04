@@ -22,53 +22,97 @@
 from datetime import timedelta
 import win32com.client
 import gtk
-#import gobject
 
-class MusicModel(dict):
-    def __init__(self, *args, **kwargs):
-        super(MusicModel, self).__init__(*args, **kwargs)
+class MusicStore:
+    def __init__(self, widget, itunes):
+        self.widget = widget
+        self.itunes = itunes
+        self.artists = {}
+        self.albums = {}
+        self.songs = {}
+        self.years = {}
 
-    def add(self, playTime, playCount, keya, keyb=None):
-        timeParts = playTime.split(":")
-        timeParts.reverse()
-        secs = int(timeParts[0])
-        mins = int(timeParts[1])
-        if len(timeParts) > 2:
-            hrs = int(timeParts[2])
-        else:
-            hrs = 0
-        pTime = timedelta(seconds=secs, minutes=mins, hours=hrs)
+    def startover(self):
+        self.songs.clear()
+        self.artists.clear()
+        self.albums.clear()
+        self.years.clear()
+        self.widget.songstore.clear()
+        self.widget.albumstore.clear()
+        self.widget.artiststore.clear()
+        self.widget.yearstore.clear()
 
-        if keyb:
-            key = keya, keyb
-        else:
-            key = keya
+    def addTracks(self):
+        count = self.itunes.getPlaylistSize()
 
-        if self.has_key(key):
-            pTime += self[key][0]
-            playCount += self[key][1]
+        for i in range(1, count):
+            track = self.itunes.getTrack(i)
+            time_parts = track['time'].split(":")
+            time_parts.reverse()
+            secs = int(time_parts[0])
+            mins = int(time_parts[1])
+            if len(time_parts) > 2:
+                hrs = int(time_parts[2])
+            else:
+                hrs = 0
+            play_time = timedelta(seconds=secs, minutes=mins, hours=hrs)
 
-        self[key] = pTime, playCount
+            artist = track['artist']
+            song = track['song']
+            album = track['album']
+            year = track['year']
+            playcount = track['playcount']
+
+            if self.artists.has_key(track['artist']):
+                self.artists[artist]['playcount'] += playcount
+                self.artists[artist]['time'] += play_time
+            else:
+                self.artists[artist] = {'playcount': playcount, 'time': play_time}
+
+            if self.years.has_key(track['year']):
+                self.years[year]['playcount'] += playcount
+                self.years[year]['time'] += play_time
+            else:
+                self.years[year] = {'playcount': playcount, 'time': play_time}
+
+            if self.songs.has_key((song, artist)):
+                self.songs[song, artist]['playcount'] += playcount
+                self.songs[song, artist]['time'] += play_time
+            else:
+                self.songs[song, artist] = {'playcount': playcount, 'time': play_time}
+
+            if self.albums.has_key((album, artist)):
+                self.albums[album, artist]['playcount'] += playcount
+                self.albums[album, artist]['time'] += play_time
+            else:
+                self.albums[album, artist] = {'playcount': playcount, 'time': play_time}
 
     def liszterize(self):
-        liszt = []
-        for key in self:
-            if isinstance(key, basestring):
-                liszt.append((str(self[key][0]), self[key][1]) + (key,))
-            else:
-                liszt.append((str(self[key][0]), self[key][1]) + key)
+        for artist in self.artists:
+            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time'])
+            self.widget.artiststore.append(row)
 
-        return sorted(liszt, key=lambda x:(x[0]).lower())
+        for album in self.albums:
+            row = album + (self.albums[album]['playcount'], str(self.albums[album]['time']))
+            self.widget.albumstore.append(row)
+
+        for song in self.songs:
+            if isinstance(song, basestring):
+                row = song, self.songs[song]['playcount'], str(self.songs[song]['time'])
+                print "string: " + row
+            else:                
+                row = song + (self.songs[song]['playcount'], str(self.songs[song]['time']))
+                print "tuple: ", row
+            self.widget.songstore.append(row)
+
+        for year in self.years:
+            row = year, self.years[year]['playcount'], str(self.years[year]['time'])
+            self.widget.yearstore.append(row)
 
 class iTunesApp:
     def __init__(self):
         self.app = win32com.client.gencache.EnsureDispatch("iTunes.Application")
         self.mainLibrarySource = self.app.LibrarySource
-
-        self.artists = MusicModel()
-        self.years = MusicModel()
-        self.albums = MusicModel()
-        self.songs = MusicModel()
 
     def getPlayLists(self):
         self.playLists = self.mainLibrarySource.Playlists
@@ -85,41 +129,31 @@ class iTunesApp:
                 self.tracks = self.playList.Tracks
                 self.trackCount = self.tracks.Count
                 break
-            self.playList = "Not found"
+            self.playList = None
 
-        if self.playList == "Not found":
-            return 0
+        if self.playList:
+            return True
         else:
-            self.__analyze()
-            return 1
+            return False
 
+    def getPlaylistSize(self):
+        return self.trackCount
 
-    def __analyze(self):
-        for i in range(1, self.trackCount):
-            track = self.tracks.Item(i)
-
-            artist = track.Artist
-            album = track.Album
-            name = track.Name
-            playTime = track.Time
-            playCount = track.PlayedCount
-            trackYear = track.Year
-
-            self.artists.add(playTime, playCount, artist)
-            self.years.add(playTime, playCount, trackYear)
-            self.albums.add(playTime, playCount, album, artist)
-            self.songs.add(playTime, playCount, name, artist)
-
-    def spew(self):
-        a = self.albums.liszterize()
-        return a
-
+    def getTrack(self, num):
+        track = self.tracks.Item(num)
+        parsedTrack = {'artist': track.Artist,
+                       'album': track.Album,
+                       'song': track.Name,
+                       'time': track.Time,
+                       'playcount': track.PlayedCount,
+                       'year': track.Year }
+        return parsedTrack
 
 class Handlers:
-
-    def __init__(self, widget, itunes):
+    def __init__(self, widget, itunes, model):
         self.widget = widget
         self.itunes = itunes
+        self.model = model
 
     def on_startbutton_clicked (self, *args):
         if self.widget.comboboxplaylist.get_active():
@@ -127,14 +161,10 @@ class Handlers:
             self.widget.startbutton.set_relief(gtk.RELIEF_NONE)
             text = self.widget.comboboxplaylist.get_active_text()
             self.widget.statusbar.set_text('Status: Analyzing playlist \'' + text + '\'. This may take a few moments.')
+            self.model.startover()
             self.itunes.setPlaylist(text)
-
-            artists = self.itunes.artists.liszterize()
-            i = 1
-            for artist in artists:
-                self.widget.artiststore.append(artist)
-                i = i + 1
-
+            self.model.addTracks()
+            self.model.liszterize()
             self.widget.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
             self.widget.startbutton.set_relief(gtk.RELIEF_NORMAL)
 
@@ -148,7 +178,6 @@ def delete_event(self, widget, event, data=None):
     gtk.main_quit()
 
 class Widgets:
-    
     def __init__(self, builder):
         widgets = {'window',
                    # widget widgets
@@ -165,52 +194,50 @@ class Widgets:
                    'songstore',
                    'artiststore',
                    'yearstore'}
-        
+
         for w in widgets:
             setattr (self, w, builder.get_object(w))
-        
+
         # attach TreeViewColumns to ListStores        
-        views = { self.treeViewArtists: (('Artist', 2), ('Plays', 1), ('Time', 0)),
-                 self.treeViewAlbums: (('Album', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
-                 self.treeViewSongs: (('Song', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
-                 self.treeViewYears: (('Year', 2), ('Plays', 1), ('Time', 0)) }
+        views = { self.treeViewArtists: ('Artist', 'Plays', 'Time'),
+                 self.treeViewAlbums: ('Album', 'Artist', 'Plays', 'Time'),
+                 self.treeViewSongs: ('Song', 'Artist', 'Plays', 'Time'),
+                 self.treeViewYears: ('Year', 'Plays', 'Time') }
 
         renderer = gtk.CellRendererText()
         for view in views:
             columns = views[view]
-            for data in columns:
-                name = data[0]
-                pos = data[1]
+            pos = 0
+            for name in columns:
                 viewcolumn = gtk.TreeViewColumn(name, renderer, text=pos)
                 viewcolumn.set_sort_column_id(pos)
                 viewcolumn.pack_start(renderer)
                 view.append_column(viewcolumn)
+                pos = pos + 1
 
         self.comboboxplaylist.pack_start(renderer)
         self.comboboxplaylist.add_attribute(renderer, "text", 0)
         self.playliststore.append(["--- Select Playlist ---"])
 
 class Tunalyzer:
-
     def __init__(self):
-
         builder = gtk.Builder()
         builder.add_from_file('tunalyzer.xml')
-        self.w = Widgets(builder)
+        self.widgets = Widgets(builder)
         self.itunes = iTunesApp()
-        builder.connect_signals(Handlers(self.w, self.itunes))
+        self.music = MusicStore(self.widgets, self.itunes)
+        builder.connect_signals(Handlers(self.widgets, self.itunes, self.music))
         self.populateDropDown() # TODO: this should be a handler / window create signal?
-        self.w.window.show()
+        self.widgets.window.show()
 
     def populateDropDown(self):
         pList = self.itunes.getPlayLists()
         i = 1
         for p in pList:
-            self.w.playliststore.append([p])
+            self.widgets.playliststore.append([p])
             i = i + 1
-        self.w.comboboxplaylist.set_active(0)
+        self.widgets.comboboxplaylist.set_active(0)
 
 if __name__ == "__main__":
     tuna = Tunalyzer()
     gtk.main()
-
