@@ -57,19 +57,8 @@ class MusicDict(dict):
                 liszt.append((str(self[key][0]), self[key][1]) + (key,))
             else:
                 liszt.append((str(self[key][0]), self[key][1]) + key)
-        return liszt
-
-
-"""
-You can sort a list of tuples by key!
->>> student_tuples = [
-        ('john', 'A', 15),
-        ('jane', 'B', 12),
-        ('dave', 'B', 10),
-]
->>> sorted(student_tuples, key=lambda student: student[2])   # sort by age
-[('dave', 'B', 10), ('jane', 'B', 12), ('john', 'A', 15)]
-"""
+        
+        return sorted(liszt, key=lambda x:(x[0]).lower())
 
 class iTunesApp:
     def __init__(self):
@@ -87,7 +76,6 @@ class iTunesApp:
         pList = []
         for p in range(1, self.numPlayLists):
             pList.append(self.playLists.Item(p).Name)
-        pList.reverse()
         return pList
 
     def setPlaylist(self, name="Music"):
@@ -143,22 +131,11 @@ class Handler:
             artists = self.ui.tunes.artists.liszterize()
             i=1
             for artist in artists:
-                self.ui.artiststore.insert(1,artist)
+                self.ui.artiststore.append(artist)
                 i = i + 1
             
-            #self.ui.treeViewArtists.set_model(self.ui.artiststore)
-            renderer=gtk.CellRendererText()
-            artistcolumn = gtk.TreeViewColumn('Artist', renderer, text=2)
-            artistcolumn.pack_start(renderer)
-            self.ui.treeViewArtists.append_column(artistcolumn)
-  
-            timecolumn = gtk.TreeViewColumn('Time', renderer, text=0)
-            timecolumn.pack_start(renderer)
-            self.ui.treeViewArtists.append_column(timecolumn)
-            
-            playscolumn = gtk.TreeViewColumn('Plays', renderer, text=1)
-            playscolumn.pack_start(renderer)
-            self.ui.treeViewArtists.append_column(playscolumn)
+            self.ui.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
+            self.ui.startbutton.set_relief(gtk.RELIEF_NORMAL)
             
         
     def main_quit (self, data=None):
@@ -194,7 +171,24 @@ class TunaWindow:
         self.treeViewYears = builder.get_object('treeViewYears')
         self.statusbar = builder.get_object('statusbar')
         self.startbutton = builder.get_object('startbutton')
-
+        
+        # add render to columns
+        renderer=gtk.CellRendererText()
+        artistcolumn = gtk.TreeViewColumn('Artist', renderer, text=2)
+        artistcolumn.set_sort_column_id(2)
+        artistcolumn.pack_start(renderer)
+        self.treeViewArtists.append_column(artistcolumn)
+        
+        timecolumn = gtk.TreeViewColumn('Time', renderer, text=0)
+        timecolumn.set_sort_column_id(0)
+        timecolumn.pack_start(renderer)
+        self.treeViewArtists.append_column(timecolumn)
+        
+        playscolumn = gtk.TreeViewColumn('Plays', renderer, text=1)
+        playscolumn.set_sort_column_id(1)
+        playscolumn.pack_start(renderer)
+        self.treeViewArtists.append_column(playscolumn)
+        
         # signals
         builder.connect_signals(Handler(self))
 
@@ -212,16 +206,9 @@ class TunaWindow:
         pList = self.tunes.getPlayLists()
         i=1
         for p in pList:
-            self.playliststore.insert(1,[p])
+            self.playliststore.append([p])
             i = i + 1
         self.comboboxplaylist.set_active(0)
-
-#        self.treeViewSongs.set_model(self.playliststore)
-#        renderer2=gtk.CellRendererText()
-#        treeviewcolumn = gtk.TreeViewColumn('Albums', renderer2, text=0)
-#        treeviewcolumn.pack_start(renderer2)
-#        self.treeViewSongs.append_column(treeviewcolumn)
-
 
 if __name__ == "__main__":
     tuna = TunaWindow()
