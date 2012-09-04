@@ -22,12 +22,12 @@
 from datetime import timedelta
 import win32com.client
 import gtk
-import gobject
-     
+#import gobject
+
 class MusicDict(dict):
     def __init__(self, *args, **kwargs):
         super(MusicDict, self).__init__(*args, **kwargs)
-  
+
     def add(self, playTime, playCount, keya, keyb=None):
         timeParts = playTime.split(":")
         timeParts.reverse()
@@ -38,38 +38,38 @@ class MusicDict(dict):
         else:
             hrs = 0
         pTime = timedelta(seconds=secs, minutes=mins, hours=hrs)
-        
+
         if keyb:
             key = keya, keyb
         else:
             key = keya
-        
+
         if self.has_key(key):
             pTime += self[key][0]
             playCount += self[key][1]
-                        
+
         self[key] = pTime, playCount
-        
+
     def liszterize(self):
         liszt = []
-        for key in self:            
+        for key in self:
             if isinstance(key, basestring):
                 liszt.append((str(self[key][0]), self[key][1]) + (key,))
             else:
                 liszt.append((str(self[key][0]), self[key][1]) + key)
-        
+
         return sorted(liszt, key=lambda x:(x[0]).lower())
 
 class iTunesApp:
     def __init__(self):
         self.app = win32com.client.gencache.EnsureDispatch("iTunes.Application")
         self.mainLibrarySource = self.app.LibrarySource
-        
+
         self.artists = MusicDict()
         self.years = MusicDict()
         self.albums = MusicDict()
-        self.songs = MusicDict()        
-        
+        self.songs = MusicDict()
+
     def getPlayLists(self):
         self.playLists = self.mainLibrarySource.Playlists
         self.numPlayLists = self.playLists.Count
@@ -112,14 +112,14 @@ class iTunesApp:
 
     def spew(self):
         a = self.albums.liszterize()
-        return a 
-    
-   
+        return a
+
+
 class Handler:
-    
+
     def __init__(self, data):
         self.ui = data
-        
+
     def on_startbutton_clicked (self, *args):
         if self.ui.comboboxplaylist.get_active():
             self.ui.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_OFF)
@@ -127,19 +127,19 @@ class Handler:
             text = self.ui.comboboxplaylist.get_active_text()
             self.ui.statusbar.set_text('Status: Analyzing playlist \'' + text + '\'. This may take a few moments.')
             self.ui.tunes.setPlaylist(text)
-                   
+
             artists = self.ui.tunes.artists.liszterize()
-            i=1
+            i = 1
             for artist in artists:
                 self.ui.artiststore.append(artist)
                 i = i + 1
-            
+
             self.ui.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
             self.ui.startbutton.set_relief(gtk.RELIEF_NORMAL)
-            
-        
+
+
     def main_quit (self, data=None):
-        gtk.main_quit()         
+        gtk.main_quit()
 
     def on_window_destroy(self, widget, data=None):
         gtk.main_quit()
@@ -148,12 +148,12 @@ def delete_event(self, widget, event, data=None):
     gtk.main_quit()
 
 class TunaWindow:
-     
-    def __init__(self):  
-      
+
+    def __init__(self):
+
         builder = gtk.Builder()
-        builder.add_from_file('tunalyzer.xml')       
-         
+        builder.add_from_file('tunalyzer.xml')
+
         self.window = builder.get_object('tunawindow')
 
         # stores
@@ -171,40 +171,42 @@ class TunaWindow:
         self.treeViewYears = builder.get_object('treeViewYears')
         self.statusbar = builder.get_object('statusbar')
         self.startbutton = builder.get_object('startbutton')
-        
+
         # add render to columns
-        renderer=gtk.CellRendererText()
-        artistcolumn = gtk.TreeViewColumn('Artist', renderer, text=2)
-        artistcolumn.set_sort_column_id(2)
-        artistcolumn.pack_start(renderer)
-        self.treeViewArtists.append_column(artistcolumn)
-        
-        timecolumn = gtk.TreeViewColumn('Time', renderer, text=0)
-        timecolumn.set_sort_column_id(0)
-        timecolumn.pack_start(renderer)
-        self.treeViewArtists.append_column(timecolumn)
-        
-        playscolumn = gtk.TreeViewColumn('Plays', renderer, text=1)
-        playscolumn.set_sort_column_id(1)
-        playscolumn.pack_start(renderer)
-        self.treeViewArtists.append_column(playscolumn)
-        
+
+        # [ view: (column_name, list_store_column) }
+        views = { self.treeViewArtists: (('Artist', 2), ('Plays', 1), ('Time', 0)),
+                 self.treeViewAlbums: (('Album', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
+                 self.treeViewSongs: (('Song', 2), ('Artist', 3), ('Plays', 1), ('Time', 0)),
+                 self.treeViewYears: (('Year', 2), ('Plays', 1), ('Time', 0)) }
+
+        renderer = gtk.CellRendererText()
+        for view in views:
+            columns = views[view]
+            for data in columns:
+                name = data[0]
+                pos = data[1]
+                viewcolumn = gtk.TreeViewColumn(name, renderer, text=pos)
+                viewcolumn.set_sort_column_id(pos)
+                viewcolumn.pack_start(renderer)
+                view.append_column(viewcolumn)
+
         # signals
         builder.connect_signals(Handler(self))
 
         self.window.show()
-        self.tunes = iTunesApp()        
-        self.populateDropDown()        
+        self.tunes = iTunesApp()
+        self.populateDropDown()
 
-        
+
     def populateDropDown(self):
-        renderer=gtk.CellRendererText()
+        renderer = gtk.CellRendererText()
         self.comboboxplaylist.pack_start(renderer)
         self.comboboxplaylist.add_attribute(renderer, "text", 0)
-        self.playliststore.append(["--- Select Playlist ---"])    
-        
+        self.playliststore.append(["--- Select Playlist ---"])
+
         pList = self.tunes.getPlayLists()
-        i=1
+        i = 1
         for p in pList:
             self.playliststore.append([p])
             i = i + 1
@@ -213,4 +215,4 @@ class TunaWindow:
 if __name__ == "__main__":
     tuna = TunaWindow()
     gtk.main()
-    
+
