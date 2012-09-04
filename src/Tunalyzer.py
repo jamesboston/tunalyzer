@@ -47,6 +47,16 @@ class MusicStore:
 
         for i in range(1, count):
             track = self.itunes.getTrack(i)
+
+            if track['albumartist']:
+                artist = track['albumartist']
+            else:
+                artist = track['artist']
+            song = track['song']
+            album = track['album']
+            year = track['year']
+            playcount = track['playcount']
+
             time_parts = track['time'].split(":")
             time_parts.reverse()
             secs = int(time_parts[0])
@@ -55,59 +65,67 @@ class MusicStore:
                 hrs = int(time_parts[2])
             else:
                 hrs = 0
-            play_time = timedelta(seconds=secs, minutes=mins, hours=hrs)
+            play_time = timedelta(seconds=secs, minutes=mins, hours=hrs) * playcount
 
-            artist = track['artist']
-            song = track['song']
-            album = track['album']
-            year = track['year']
-            playcount = track['playcount']
-
-            if self.artists.has_key(track['artist']):
+            if self.artists.has_key(artist):
                 self.artists[artist]['playcount'] += playcount
                 self.artists[artist]['time'] += play_time
             else:
                 self.artists[artist] = {'playcount': playcount, 'time': play_time}
 
-            if self.years.has_key(track['year']):
+            if self.years.has_key(year):
                 self.years[year]['playcount'] += playcount
                 self.years[year]['time'] += play_time
             else:
                 self.years[year] = {'playcount': playcount, 'time': play_time}
 
             if self.songs.has_key((song, artist)):
-                self.songs[song, artist]['playcount'] += playcount
-                self.songs[song, artist]['time'] += play_time
+                self.songs[(song, artist)]['playcount'] += playcount
+                self.songs[(song, artist)]['time'] += play_time
             else:
                 self.songs[song, artist] = {'playcount': playcount, 'time': play_time}
 
             if self.albums.has_key((album, artist)):
-                self.albums[album, artist]['playcount'] += playcount
-                self.albums[album, artist]['time'] += play_time
+                self.albums[(album, artist)]['playcount'] += playcount
+                self.albums[(album, artist)]['time'] += play_time
             else:
-                self.albums[album, artist] = {'playcount': playcount, 'time': play_time}
+                self.albums[(album, artist)] = {'playcount': playcount, 'time': play_time}
+
+#    def _limit(self, data):
+#        keys = data.keys()
+#        keys = sorted(keys, key=lambda x:data[x]['time'])
+#        keys.reverse()
+#        return keys
 
     def liszterize(self):
+#        keys = self._limit(self.artists)
+#        for i in range(0,200):
+#            artist = keys[i]
+#            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time']), self.artists[artist]['time'].total_seconds()
+#            self.widget.artiststore.append(row)
+
         for artist in self.artists:
-            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time'])
+            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time']), self.artists[artist]['time'].total_seconds()
             self.widget.artiststore.append(row)
+        self.widget.artiststore.set_sort_column_id(3, gtk.SORT_DESCENDING)
 
         for album in self.albums:
-            row = album + (self.albums[album]['playcount'], str(self.albums[album]['time']))
+            row = album + (self.albums[album]['playcount'], str(self.albums[album]['time']), self.albums[album]['time'].total_seconds())
             self.widget.albumstore.append(row)
+        self.widget.albumstore.set_sort_column_id(4, gtk.SORT_DESCENDING)
 
         for song in self.songs:
             if isinstance(song, basestring):
-                row = song, self.songs[song]['playcount'], str(self.songs[song]['time'])
-                print "string: " + row
-            else:                
-                row = song + (self.songs[song]['playcount'], str(self.songs[song]['time']))
-                print "tuple: ", row
+                row = song, self.songs[song]['playcount'], str(self.songs[song]['time']), self.songs[song]['time'].total_seconds()
+            else:
+                row = song + (self.songs[song]['playcount'], str(self.songs[song]['time']), self.songs[song]['time'].total_seconds())
             self.widget.songstore.append(row)
+        self.widget.songstore.set_sort_column_id(4, gtk.SORT_DESCENDING)
 
         for year in self.years:
-            row = year, self.years[year]['playcount'], str(self.years[year]['time'])
+            row = year, self.years[year]['playcount'], str(self.years[year]['time']), self.years[year]['time'].total_seconds()
             self.widget.yearstore.append(row)
+        self.widget.yearstore.set_sort_column_id(3, gtk.SORT_DESCENDING)
 
 class iTunesApp:
     def __init__(self):
@@ -141,7 +159,9 @@ class iTunesApp:
 
     def getTrack(self, num):
         track = self.tracks.Item(num)
+        track = win32com.client.CastTo(track, "IITFileOrCDTrack")
         parsedTrack = {'artist': track.Artist,
+                       'albumartist': track.AlbumArtist,
                        'album': track.Album,
                        'song': track.Name,
                        'time': track.Time,
@@ -165,8 +185,10 @@ class Handlers:
             self.itunes.setPlaylist(text)
             self.model.addTracks()
             self.model.liszterize()
+            self.widget.statusbar.set_text('Status: Ready')
             self.widget.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
             self.widget.startbutton.set_relief(gtk.RELIEF_NORMAL)
+
 
     def main_quit (self, data=None):
         gtk.main_quit()
@@ -210,7 +232,10 @@ class Widgets:
             pos = 0
             for name in columns:
                 viewcolumn = gtk.TreeViewColumn(name, renderer, text=pos)
-                viewcolumn.set_sort_column_id(pos)
+                if name == 'Time':
+                    viewcolumn.set_sort_column_id(pos + 1)
+                else:
+                    viewcolumn.set_sort_column_id(pos)
                 viewcolumn.pack_start(renderer)
                 view.append_column(viewcolumn)
                 pos = pos + 1
@@ -228,6 +253,7 @@ class Tunalyzer:
         self.music = MusicStore(self.widgets, self.itunes)
         builder.connect_signals(Handlers(self.widgets, self.itunes, self.music))
         self.populateDropDown() # TODO: this should be a handler / window create signal?
+        self.widgets.statusbar.set_text('Status: Ready')
         self.widgets.window.show()
 
     def populateDropDown(self):
