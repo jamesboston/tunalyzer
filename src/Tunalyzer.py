@@ -98,34 +98,33 @@ class MusicStore:
 #        return keys
 
     def liszterize(self):
-#        keys = self._limit(self.artists)
-#        for i in range(0,200):
-#            artist = keys[i]
-#            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time']), self.artists[artist]['time'].total_seconds()
-#            self.widget.artiststore.append(row)
+        """
+        rows are timedelta, play count, total play time, ....
+            
+        """
 
         for artist in self.artists:
-            row = artist, self.artists[artist]['playcount'], str(self.artists[artist]['time']), self.artists[artist]['time'].total_seconds()
+            row = self.artists[artist]['time'].total_seconds(), self.artists[artist]['playcount'], str(self.artists[artist]['time']), artist
             self.widget.artiststore.append(row)
-        self.widget.artiststore.set_sort_column_id(3, gtk.SORT_DESCENDING)
+        self.widget.artiststore.set_sort_column_id(0, gtk.SORT_DESCENDING)
 
         for album in self.albums:
-            row = album + (self.albums[album]['playcount'], str(self.albums[album]['time']), self.albums[album]['time'].total_seconds())
+            row = (self.albums[album]['time'].total_seconds(), self.albums[album]['playcount'], str(self.albums[album]['time'])) + album
             self.widget.albumstore.append(row)
-        self.widget.albumstore.set_sort_column_id(4, gtk.SORT_DESCENDING)
+        self.widget.albumstore.set_sort_column_id(0, gtk.SORT_DESCENDING)
 
         for song in self.songs:
             if isinstance(song, basestring):
-                row = song, self.songs[song]['playcount'], str(self.songs[song]['time']), self.songs[song]['time'].total_seconds()
+                row = self.songs[song]['time'].total_seconds(), self.songs[song]['playcount'], str(self.songs[song]['time']), song
             else:
-                row = song + (self.songs[song]['playcount'], str(self.songs[song]['time']), self.songs[song]['time'].total_seconds())
+                row = (self.songs[song]['time'].total_seconds(), self.songs[song]['playcount'], str(self.songs[song]['time'])) + song
             self.widget.songstore.append(row)
-        self.widget.songstore.set_sort_column_id(4, gtk.SORT_DESCENDING)
+        self.widget.songstore.set_sort_column_id(0, gtk.SORT_DESCENDING)
 
         for year in self.years:
-            row = year, self.years[year]['playcount'], str(self.years[year]['time']), self.years[year]['time'].total_seconds()
+            row = self.years[year]['time'].total_seconds(), self.years[year]['playcount'], str(self.years[year]['time']), year
             self.widget.yearstore.append(row)
-        self.widget.yearstore.set_sort_column_id(3, gtk.SORT_DESCENDING)
+        self.widget.yearstore.set_sort_column_id(0, gtk.SORT_DESCENDING)
 
 class iTunesApp:
     def __init__(self):
@@ -137,7 +136,8 @@ class iTunesApp:
         self.numPlayLists = self.playLists.Count
         pList = []
         for p in range(1, self.numPlayLists):
-            pList.append(self.playLists.Item(p).Name)
+            if not self.playLists.Item(p).Name in ('Library', 'Movies', 'Podcasts', 'Books', 'Purchased', 'Genius', 'iTunes DJ'):
+                pList.append(self.playLists.Item(p).Name)
         return pList
 
     def setPlaylist(self, name="Music"):
@@ -221,21 +221,22 @@ class Widgets:
             setattr (self, w, builder.get_object(w))
 
         # attach TreeViewColumns to ListStores        
-        views = { self.treeViewArtists: ('Artist', 'Plays', 'Time'),
-                 self.treeViewAlbums: ('Album', 'Artist', 'Plays', 'Time'),
-                 self.treeViewSongs: ('Song', 'Artist', 'Plays', 'Time'),
-                 self.treeViewYears: ('Year', 'Plays', 'Time') }
+        views = { self.treeViewArtists: ('Plays', 'Time', 'Artist'),
+                 self.treeViewAlbums: ('Plays', 'Time', 'Album', 'Artist'),
+                 self.treeViewSongs: ('Plays', 'Time', 'Song', 'Artist'),
+                 self.treeViewYears: ('Plays', 'Time', 'Year') }
 
         renderer = gtk.CellRendererText()
         for view in views:
             columns = views[view]
-            pos = 0
+            pos = 1
             for name in columns:
                 viewcolumn = gtk.TreeViewColumn(name, renderer, text=pos)
                 if name == 'Time':
-                    viewcolumn.set_sort_column_id(pos + 1)
+                    viewcolumn.set_sort_column_id(0)
                 else:
                     viewcolumn.set_sort_column_id(pos)
+                viewcolumn.set_resizable(True)
                 viewcolumn.pack_start(renderer)
                 view.append_column(viewcolumn)
                 pos = pos + 1

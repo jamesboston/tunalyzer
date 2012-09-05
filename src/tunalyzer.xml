@@ -4,28 +4,28 @@
   <!-- interface-naming-policy project-wide -->
   <object class="GtkListStore" id="albumstore">
     <columns>
+      <!-- column-name timedelta -->
+      <column type="gfloat"/>
+      <!-- column-name Plays -->
+      <column type="gint"/>
+      <!-- column-name Time -->
+      <column type="gchararray"/>	  
       <!-- column-name Name -->
       <column type="gchararray"/>
       <!-- column-name Artist -->
       <column type="gchararray"/>
-      <!-- column-name Plays -->
-      <column type="gint"/>
-      <!-- column-name Time -->
-      <column type="gchararray"/>
-      <!-- column-name timedelta -->
-      <column type="gfloat"/>
     </columns>
   </object>
   <object class="GtkListStore" id="artiststore">
     <columns>
-      <!-- column-name Artist -->
-      <column type="gchararray"/>
+      <!-- column-name timedelta -->
+      <column type="gfloat"/>
       <!-- column-name Plays -->
       <column type="gint"/>
       <!-- column-name Time -->
+      <column type="gchararray"/>	  
+      <!-- column-name Artist -->
       <column type="gchararray"/>
-      <!-- column-name timedelta -->
-      <column type="gfloat"/>
     </columns>
   </object>
   <object class="GtkListStore" id="playliststore">
@@ -36,28 +36,28 @@
   </object>
   <object class="GtkListStore" id="songstore">
     <columns>
+      <!-- column-name timedelta -->
+      <column type="gfloat"/>
+      <!-- column-name Plays -->
+      <column type="gint"/>
+      <!-- column-name Time -->
+      <column type="gchararray"/>
       <!-- column-name Song -->
       <column type="gchararray"/>
       <!-- column-name Artist -->
       <column type="gchararray"/>
-      <!-- column-name Plays -->
-      <column type="gint"/>
-      <!-- column-name Time -->
-      <column type="gchararray"/>
-      <!-- column-name timedelta -->
-      <column type="gfloat"/>
     </columns>
   </object>
   <object class="GtkListStore" id="yearstore">
     <columns>
-      <!-- column-name Year -->
-      <column type="gint"/>
+      <!-- column-name timedelta -->
+      <column type="gfloat"/>	
       <!-- column-name Plays -->
       <column type="gint"/>
       <!-- column-name Time -->
       <column type="gchararray"/>
-      <!-- column-name timedelta -->
-      <column type="gfloat"/>
+      <!-- column-name Year -->
+      <column type="gint"/>
     </columns>
   </object>
   <object class="GtkWindow" id="window">
