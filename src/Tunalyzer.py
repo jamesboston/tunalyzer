@@ -19,7 +19,7 @@
 #
 #
 
-
+import os, sys
 import gtk
 import itunes
 import models
@@ -39,5 +39,26 @@ class Tunalyzer:
 
 
 if __name__ == "__main__":
-    tuna = Tunalyzer()
+
+    try:
+        basedir = os.environ['_MEIPASS2']
+    except KeyError:
+        basedir = sys.path[0]
+
+    #Use embedded gtkrc
+    gtkrc = os.path.join(basedir, 'gtkrc')
+    gtk.rc_set_default_files([gtkrc])
+    gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
+
+    #gtk.rc_parse('gtkrc')
+
+    #tuna = Tunalyzer()
+    builder = gtk.Builder()
+    builder.add_from_file(os.path.join(basedir,'tunalyzer.xml'))
+    model = models.MusicStore(itunes.iTunesApp())
+    view = views.Widgets(builder)
+    handler = controllers.Handlers(view, model)
+    builder.connect_signals(handler)
+    view.show_main_window()    
+    
     gtk.main()

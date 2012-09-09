@@ -81,7 +81,6 @@ class Widgets:
             self.statusbar.set_text('Status: Ready')
             self.comboboxplaylist.set_button_sensitivity(gtk.SENSITIVITY_ON)
             self.startbutton.set_relief(gtk.RELIEF_NORMAL)
-        pass
 
     def get_playlist(self):
         return self.comboboxplaylist.get_active_text()
