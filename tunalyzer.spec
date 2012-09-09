@@ -2,8 +2,8 @@
 
 # see http://www.pyinstaller.org/ticket/14
 
-import _winreg
-import msvcrt
+#import _winreg
+#import msvcrt
 
 
 # try:
@@ -26,14 +26,14 @@ engines_dir = os.path.join('lib', 'gtk-2.0', '2.10.0', 'engines')
 
 #Add gtkrc file to exe
 extra_datas = [ ('gtkrc', os.path.join(gtkdir, gtkrc_dir, 'gtkrc'), 'DATA'), \
-                ('tunalyzer.xml', '..\\src\\tunalyzer.xml', 'DATA')]
+                ('tunalyzer.xml', 'src\\tunalyzer.xml', 'DATA')]
 
 #Add libwimp.dll to exe (needed for the MS-Windows theme)
 extra_binaries = [ (os.path.join(engines_dir, 'libwimp.dll'), \
                    os.path.join(gtkdir, engines_dir, 'libwimp.dll'), 'BINARY') ]
 
-a = Analysis(['..\\src\\tunalyzer.py'],
-             pathex=['C:\\Users\\James\\Documents\\Code\\Tunalyzer\\pyinstaller-2.0'],
+a = Analysis(['src\\tunalyzer.py'],
+             pathex=['C:\\Users\\James\\Documents\\Code\\Tunalyzer\\pyinstaller'],
              hiddenimports=['gtkglext', 'gdkgl', 'gdkglext', 'gdk', 'gtk.gdk', 'gtk.gtkgl',
                  'gtk.gtkgl._gtkgl', 'gtkgl', 'pangocairo', 'pango', 'atk',
                  'gobject', 'gtk.glade', 'cairo', 'gio',
