@@ -27,17 +27,6 @@ import views
 import controllers
 
 
-class Tunalyzer:
-    def __init__(self):
-        builder = gtk.Builder()
-        builder.add_from_file('tunalyzer.xml')
-        model = models.MusicStore(itunes.iTunesApp())
-        view = views.Widgets(builder)
-        handler = controllers.Handlers(view, model)
-        builder.connect_signals(handler)
-        view.show_main_window()
-
-
 if __name__ == "__main__":
 
     try:
@@ -50,15 +39,12 @@ if __name__ == "__main__":
     gtk.rc_set_default_files([gtkrc])
     gtk.rc_reparse_all_for_settings(gtk.settings_get_default(), True)
 
-    #gtk.rc_parse('gtkrc')
-
-    #tuna = Tunalyzer()
     builder = gtk.Builder()
-    builder.add_from_file(os.path.join(basedir,'tunalyzer.xml'))
+    builder.add_from_file(os.path.join(basedir, 'tunalyzer.xml'))
     model = models.MusicStore(itunes.iTunesApp())
     view = views.Widgets(builder)
     handler = controllers.Handlers(view, model)
     builder.connect_signals(handler)
-    view.show_main_window()    
-    
+    view.show_main_window()
+
     gtk.main()
