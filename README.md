@@ -4,7 +4,7 @@ Analyze your iTunes library. Find out how many minutes you have listened to a so
 from a particular year.
  
 
-![tunalyzer](screenshot.png)
+![tunalyzer](https://raw.github.com/jamesboston/tunalyzer/master/screenshot.png)
 
 ## Usage
 
