@@ -46,4 +46,4 @@ Completed build is in `dist\tunalyzer` directory.
 
 ## License
 
-[GPLv3](LICENSE.md) 
+[GPLv3](https://github.com/jamesboston/tunalyzer/blob/master/LICENSE.md) 
