@@ -37,7 +37,7 @@ class iTunesApp:
     def get_track(self, num):
         if num > self.track_count:
             return None
-        
+
         track = self.tracks.Item(num)
         track = win32com.client.CastTo(track, "IITFileOrCDTrack")
         parsed_track = {'artist': track.Artist,

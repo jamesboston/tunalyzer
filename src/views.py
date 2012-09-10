@@ -9,6 +9,7 @@ import gtk
 class Widgets:
     def __init__(self, builder):
         self.widgets = {'window',
+                   'aboutdialog',
                    # ui widgets
                    'comboboxplaylist',
                    'treeViewSongs',
@@ -90,13 +91,17 @@ class Widgets:
 
     def show_main_window(self):
         self.window.show()
-        
+
     def get_active(self):
         return self.comboboxplaylist.get_active()
-    
+
     def set_active_playlist_dropdown(self, num):
         self.comboboxplaylist.set_active(num)
-    
+
     def append_playlist_dropdown(self, data):
         self.playliststore.append(data)
 
+    def show_about(self):
+        response = self.aboutdialog.run()
+        if response == gtk.RESPONSE_DELETE_EVENT or response == gtk.RESPONSE_CANCEL:
+            self.aboutdialog.hide()

@@ -71,6 +71,9 @@ class Handlers:
         pList = self.tunes.get_playlists()
         i = 1
         for p in pList:
-            self.view.append_playlist_dropdown([p])            
+            self.view.append_playlist_dropdown([p])
             i = i + 1
         self.view.set_active_playlist_dropdown(0)
+
+    def on_about_activate(self, data=None):
+        self.view.show_about()
