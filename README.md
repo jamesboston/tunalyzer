@@ -13,6 +13,9 @@ from a particular year.
 3. Select playlist
 4. Push start
 
+### Download installer or zip:
+[https://github.com/jamesboston/tunalyzer/downloads](https://github.com/jamesboston/tunalyzer/downloads)
+
 ## Development
 
 ### Building
