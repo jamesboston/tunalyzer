@@ -9,7 +9,16 @@ gtkrc_dir = os.path.join('share', 'themes', 'MS-Windows', 'gtk-2.0')
 engines_dir = os.path.join('lib', 'gtk-2.0', '2.10.0', 'engines')
 
 extra_datas = [ ('gtkrc', os.path.join(gtkdir, gtkrc_dir, 'gtkrc'), 'DATA'), \
-                ('tunalyzer.xml', 'src\\tunalyzer.xml', 'DATA')]
+                ('tunalyzer.xml', 'src\\tunalyzer.xml', 'DATA'), \
+                ('icons\\icon-16.png', 'src\\icons\icon-16.png', 'DATA'), \
+                ('icons\\icon-32.png', 'src\\icons\icon-32.png', 'DATA'), \
+                ('icons\\icon-64.png', 'src\\icons\icon-64.png', 'DATA'), \
+                ('icons\\icon-128.png', 'src\\icons\icon-128.png', 'DATA'), \
+                ('icons\\icon-256.png', 'src\\icons\icon-256.png', 'DATA'), \
+                ('icons\\icon-license.txt', 'src\\icons\icon-license.txt', 'DATA'), \
+                ('LICENSE.txt', 'LICENSE.md', 'DATA'), \
+                ('README.txt', 'README.md', 'DATA'), \
+                ('COPYING.txt', 'COPYING.md', 'DATA')  ]
 
 extra_binaries = [ (os.path.join(engines_dir, 'libwimp.dll'), \
                    os.path.join(gtkdir, engines_dir, 'libwimp.dll'), 'BINARY') ]
@@ -32,7 +41,7 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=True,
-          console=False )
+          console=False)
 
 coll = COLLECT(exe,
                a.binaries,

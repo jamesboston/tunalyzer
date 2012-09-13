@@ -5,6 +5,7 @@ Created on Sep 8, 2012
 '''
 
 import gtk
+import os
 
 class Widgets:
     def __init__(self, builder):
@@ -89,7 +90,14 @@ class Widgets:
     def close_main_window(self):
         gtk.main_quit()
 
-    def show_main_window(self):
+    def show_main_window(self, basedir):
+        self.window.set_title('Tunalyzer')
+        icon_16 = gtk.gdk.pixbuf_new_from_file(os.path.join(basedir, 'icons', 'icon-16.png'))
+        icon_32 = gtk.gdk.pixbuf_new_from_file(os.path.join(basedir, 'icons', 'icon-32.png'))
+        icon_64 = gtk.gdk.pixbuf_new_from_file(os.path.join(basedir, 'icons', 'icon-64.png'))
+        icon_128 = gtk.gdk.pixbuf_new_from_file(os.path.join(basedir, 'icons', 'icon-128.png'))
+        icon_256 = gtk.gdk.pixbuf_new_from_file(os.path.join(basedir, 'icons', 'icon-256.png'))
+        gtk.window_set_default_icon_list(icon_256, icon_128, icon_64, icon_32, icon_16)
         self.window.show()
 
     def get_active(self):

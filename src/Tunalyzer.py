@@ -45,6 +45,6 @@ if __name__ == "__main__":
     view = views.Widgets(builder)
     handler = controllers.Handlers(view, model)
     builder.connect_signals(handler)
-    view.show_main_window()
+    view.show_main_window(basedir)
 
     gtk.main()
