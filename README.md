@@ -1,3 +1,8 @@
+## DISCONTINUED
+
+Development stopped. This software was made for a world before streaming music services were so ubiquitous. 
+
+
 # Tunalyzer
 
 Analyze your iTunes library. Find out how many minutes you have listened to a song, an artist, an album, or a music 
@@ -34,17 +39,6 @@ Completed build is in `dist\tunalyzer` directory.
 	* see [http://www.python.org/download/windows/](http://www.python.org/download/windows/)
 * [PyGtk](http://ftp.gnome.org/pub/GNOME/binaries/win32/pygtk/2.24/)
 * PyInstaller (included as git submodule)
-
-###Feature wish list:
-
-* exporting song analysis as a playlist
-* support MacOS by using AppleScript in the itunes module
-* support Linux with a module for scripting Rhythmbox (or Banshee?)
-* saving analysis history
-* graphing of analysis
-* alternate ncurses or web frontend
-* support building and/or packaging on Mac and Linux
-* update checking
 
 
 ## License
